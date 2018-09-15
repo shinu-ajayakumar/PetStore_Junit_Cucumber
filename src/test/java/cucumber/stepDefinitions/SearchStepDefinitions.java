@@ -13,50 +13,87 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import helpers.WebElementHelper;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 public class SearchStepDefinitions {
 
-	WebDriver driver;
+	WebDriver driver = null;
 	Select select;
 	JavascriptExecutor js;
-	
-	//@Given("^Initialize Chrome driver and launch the application$")
+	WebDriverWait wait;
+	WebElementHelper webElementHelper;
+
+	@Before
+	public void init() {
+
+	}
+
+	@After
+	public void tearDown() {
+
+	}
+
+	@Given("^Initialize Chrome driver and launch the application$")
 	public void launchChromeBrowserAndNavigate() {
-		initializeBrowser("chrome");
+		if (driver == null) {
+			initializeBrowser("chrome");
+		}
 		driver.get("https://www.petstore.com");
 	}
 
-	@When("^Provide \"([^\"]*)\" in Search Box and Click Search button$")
-	public void searchForItems(String searchKeyword) throws Throwable {
-		setWebelementText(driver.findElement(By.id("ctl00_Search_SearchTextMainControl")), searchKeyword);
+	@When("^Provide ([^\"]*) in Search Box and Click Search button$")
+	// @When("^Provide \"([^\"]*)\" in Search Box and Click Search button$")
+	public void searchForItems(String arg1) throws Throwable {
+		setWebelementText(driver.findElement(By.id("ctl00_Search_SearchTextMainControl")), arg1);
 		clickWebelementText(driver.findElement(By.cssSelector("input.searchbutton")));
 	}
 
 	@When("^Click ([^\"]*) under Shop by Category and Select ([^\"]*) from Sort by DDL$")
-	public void clickShopByCategoryAndSort(String shopByCategoryFilterText, String sortByCriteria) throws Throwable {
-		clickWebelementText(driver.findElement(By.linkText(shopByCategoryFilterText)));
-		selectDropdown(driver.findElement(By.id("ctl00__pageBody_ddlSortItemsSLI")), sortByCriteria);
+	public void clickShopByCategoryAndSort(String arg1, String arg2) throws Throwable {
+		clickWebelementText(driver.findElement(By.linkText(arg1)));
+		selectDropdown(driver.findElement(By.id("ctl00__pageBody_ddlSortItemsSLI")), arg2);
 	}
 
 	@When("^After Clicking first product enter quantity ([^\"]*) and Click Add to Cart button$")
-	public void selectFirstListedProduct(String quantity) {
+	public void selectFirstListedProduct(String arg1) {
 		// int nthProductNo = Integer.parseInt(productNumber.replaceAll("[^0-9]", ""));
 		clickWebelementText(driver.findElements(By.xpath("//a[contains(@id,'hlDescription')]")).get(0));
-		setWebelementText(driver.findElement(By.id("ItemQuantity")), quantity);
-		Assert.assertEquals(driver.findElement(By.id("ItemQuantity")).getText(), quantity);
+		setWebelementText(driver.findElement(By.id("ItemQuantity")), arg1);
 		clickWebelementText(driver.findElement(By.id("ctl00__pageBody_ibAddToCart")));
 	}
-	
+
 	@Then("^Cart Count ([^\"]*) will be displayed$")
-	public void verifyCartCount(String count) {
-		Assert.assertEquals(driver.findElement(By.id("cartItemsCount")).getText(),count);
+	public void verifyCartCount(String arg1) {
+		waitWhileElementHasAttributeValue("slidingTopContent", "style", "display: block;");
+		Assert.assertEquals(driver.findElement(By.id("cartItemsCount")).getText(), arg1);
+		driver.quit();
+	}
+
+	public void waitWhileElementHasAttributeValue(String locator, String attribute, String value) {
+		while (driver.findElement(By.id(locator)).getAttribute(attribute).contains(value)) {
+			int timeout = 10;
+			if (timeout > 0) {
+				timeout--;
+				try {
+					// System.out.println(attribute + "t" + value);
+					Thread.sleep(1000);
+				} catch (Exception e) {
+				}
+			}
+		}
 	}
 
 	private void initializeBrowser(String browserName) {
